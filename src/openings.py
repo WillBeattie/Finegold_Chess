@@ -55,8 +55,7 @@ def get_eval(engine, fen=None, pgn_string=None, depth=None, time=None):
     if not fen:
         fen = get_fen_from_pgn_string(pgn_string)
 
-    board = chess.Board()
-    board.set_fen(fen)
+    board = chess.Board(fen)
 
     if time:
         score = engine.analyse(board, chess.engine.Limit(time=time))['score'].white()
@@ -68,6 +67,7 @@ def get_eval(engine, fen=None, pgn_string=None, depth=None, time=None):
 
 def process_file(path, engines):
     outfile = f"results/{path.split('/')[-1]}_processed.tsv"
+
 
 """
 def main():

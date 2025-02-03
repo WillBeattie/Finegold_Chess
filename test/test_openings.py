@@ -6,26 +6,22 @@ import unittest
 import src.openings as openings
 
 
-def test_chess():
-    pgn_string = "1. e4 e5 2. f4"
-    engine = chess.engine.SimpleEngine.popen_uci("../Stockfish/stockfish_current_normal.exe")
+class test_engines(unittest.TestCase):
+    def test_dutch(self):
+        """ We expect the evaluation of the Dutch to be the same between vanilla stockfish and no_f6 stockfish,
+        given f6 is never a legal move in any variation for black"""
+        DEPTH = 30
+        THRESHOLD_EVAL_DIFF = 15 # In centipawns
+        vanilla_sf = chess.engine.SimpleEngine.popen_uci("../Stockfish/stockfish_current_normal.exe")
+        no_f6_sf = chess.engine.SimpleEngine.popen_uci("../Stockfish/stockfish_f6_.exe")
 
-    pgn = open('test_pgn.pgn', 'r')
-
-    game = chess.pgn.read_game(pgn)
-    game2 = chess.pgn.read_game(StringIO(pgn_string))
-
-    board = game.board()
-    for move in game.mainline_moves():
-        board.push(move)
-
-    board2 = game2.board()
-    for move in game2.mainline_moves():
-        board2.push(move)
-
-    print(game.board().fen())
-    print(game2.board().fen())
-    return game
+        pgn_string = "1. d4 f5"
+        fen = openings.get_fen_from_pgn_string(pgn_string)
+        vanilla_eval = openings.get_eval(vanilla_sf, fen, depth=DEPTH)
+        no_f6_eval = openings.get_eval(no_f6_sf, fen, depth=DEPTH)
+        print(f'SF Eval: {vanilla_eval.score()}')
+        print(f'No f6 Eval: {no_f6_eval.score()}')
+        self.assertLessEqual(abs(vanilla_eval.score() - no_f6_eval.score()), THRESHOLD_EVAL_DIFF)
 
 
 class test_lichess(unittest.TestCase):

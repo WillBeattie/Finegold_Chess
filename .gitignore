@@ -1,1 +1,10 @@
 token.token
+/.idea/
+/Stockfish
+/.venv
+/test/__pycache__/
+/chess_openings/chess-openings/.github
+/chess_openings/chess-openings/bin
+/chess_openings/chess-openings/.gitignore
+/chess_openings/chess-openings/Makefile
+/chess_openings/chess-openings/dist
