@@ -10,8 +10,8 @@ class test_engines(unittest.TestCase):
     def test_dutch(self):
         """ We expect the evaluation of the Dutch to be the same between vanilla stockfish and no_f6 stockfish,
         given f6 is never a legal move in any variation for black"""
-        DEPTH = 30
-        THRESHOLD_EVAL_DIFF = 15 # In centipawns
+        DEPTH = 25
+        THRESHOLD_EVAL_DIFF = 15  # In centipawns
         vanilla_sf = chess.engine.SimpleEngine.popen_uci("../Stockfish/stockfish_current_normal.exe")
         no_f6_sf = chess.engine.SimpleEngine.popen_uci("../Stockfish/stockfish_f6_.exe")
 
@@ -19,9 +19,20 @@ class test_engines(unittest.TestCase):
         fen = openings.get_fen_from_pgn_string(pgn_string)
         vanilla_eval = openings.get_eval(vanilla_sf, fen, depth=DEPTH)
         no_f6_eval = openings.get_eval(no_f6_sf, fen, depth=DEPTH)
-        print(f'SF Eval: {vanilla_eval.score()}')
-        print(f'No f6 Eval: {no_f6_eval.score()}')
         self.assertLessEqual(abs(vanilla_eval.score() - no_f6_eval.score()), THRESHOLD_EVAL_DIFF)
+
+    def test_no_f6(self):
+        """ Given a position where f6 is clearly the best move,
+        we should expect a large difference in evaluation between engines"""
+        DEPTH = 20
+        EXPECTED_DELTA = 150
+        vanilla_sf = chess.engine.SimpleEngine.popen_uci("../Stockfish/stockfish_current_normal.exe")
+        no_f6_sf = chess.engine.SimpleEngine.popen_uci("../Stockfish/stockfish_f6_.exe")
+
+        fen = "rnbqkbnr/pppppppp/8/4N1B1/8/8/PPPPPPPP/R2QKBNR b KQkq - 0 1"  # Easy pawn fork available
+        vanilla_eval = openings.get_eval(vanilla_sf, fen, depth=DEPTH).score()
+        no_f6_eval = openings.get_eval(no_f6_sf, fen, depth=DEPTH).score()
+        self.assertLess(vanilla_eval + EXPECTED_DELTA, no_f6_eval)
 
 
 class test_lichess(unittest.TestCase):
