@@ -5,9 +5,8 @@ from io import StringIO
 import berserk
 import tqdm
 import csv
-
-# vanilla_sf = chess.engine.SimpleEngine.popen_uci('../Stockfish/stockfish_current_normal.exe')
-# no_f6_sf = chess.engine.SimpleEngine.popen_uci('../Stockfish/stockfish_f6_.exe')
+from time import sleep
+import pandas as pd
 
 token = open('../token.token')
 token = str(token.readline())
@@ -15,18 +14,19 @@ session = berserk.TokenSession(token)
 client = berserk.Client(session=session)
 
 
-def get_number_of_masters_games(pgn_string=None, fen=None, client=client):
+def query_master_db(pgn_string=None, fen=None, client=client, t_sleep=3):
     """
-    Asks the lichess db for the prevelance of a particular position
+    Query the lichess db.  A pause is built in to prevent rate limiting
     :param pgn_string: A string representing a game in pgn format, from the beginning
-    :return:
+    :return: A response dictionary from lichess
     """
     if not fen:
         fen = get_fen_from_pgn_string(pgn_string)
 
+    sleep(t_sleep)
+    # TODO Add rate limitation error handling
     response = client.opening_explorer.get_masters_games(position=fen)
-
-    return sum([response[k] for k in ['black', 'white', 'draws']])
+    return response
 
 
 def get_fen_from_pgn_string(pgn_string):
@@ -37,31 +37,57 @@ def get_fen_from_pgn_string(pgn_string):
     return board.fen()
 
 
-def reduce_openings(min_games=100):
+def detail_from_master(pgn_str):
     """
-    The full ECO tree contains a bunch of garbage positions played by no one.  This function checks each variation
-    against the lichess master's db and writes a file containing only the lines that are featured >min_games
-    times
-    :param min_games: The minimum number of games in the masters db to qualify the line for inclusion
-    :return: Nothing.  Creates a file ECO_Reduced_{N}.tsv containing only lines that are played >min_games times
+    Fetches pieces of information we might want to know about an opening from the lichess DB
+    :param pgn_str:
+    :return: number of master games from that position, number of games in which black plays f7f6
     """
-    from time import sleep
+    response = query_master_db(pgn_str)
+    n_games = sum([response[k] for k in ['black', 'white', 'draws']])
+
+    n_f6 = 0
+    moves = response['moves']
+    if not moves:
+        return n_games, n_f6
+
+    for move in moves:
+        if move['uci'] == 'f7f6':
+            n_f6 = sum([move['white'], move['black'], move['draws']])
+
+    return n_games, n_f6
+
+
+def detail_opening_list():
+    """
+    Supplements the ECO list with fields for number of master games (lichess db) and number of master games involving f7f6
+    :return: Nothing.  Creates a json file for each of the ECO lettered inputs
+    """
+
     from itertools import islice
-    with open(f'../chess_openings/chess-openings/ECO_Reduced_{min_games}.tsv', 'w') as outfile:
-        f_out = csv.writer(outfile, delimiter='\t')
-        for fn in ['a', 'b', 'c', 'd', 'e']:
-            f = open(f'../chess_openings/chess-openings/{fn}.tsv', 'r', newline='')
-            f_in = csv.reader(f, delimiter='\t')
+    import json
+
+    for fn in ['a', 'b', 'c', 'd', 'e']:
+        with open(f'../results/ECO_master_db_{fn}.json', 'w') as outfile, open(
+                f'../chess_openings/chess-openings/{fn}.tsv', 'r', newline='') as infile:
+
+            f_in = csv.reader(infile, delimiter='\t')
+            opening_dict = {}
 
             for line in tqdm.tqdm(islice(f_in, 1, None)):
-                sleep(5)
-                pgn_str = line[-1]
-                n_games = get_number_of_masters_games(pgn_str)
+                ECO_Code = line[0]
+                ECO_Name = line[1]
+                pgn_str = line[2]
 
-                if n_games >= min_games:
-                    f_out.writerow(line)
+                n_games, n_f6 = detail_from_master(pgn_str)
 
-            f.close()
+                opening_dict[pgn_str] = {"ECO Code": ECO_Code,
+                                         "ECO Name": ECO_Name,
+                                         "Number of Master Games": n_games,
+                                         "Number of f6 moves": n_f6}
+
+                print(opening_dict[pgn_str])
+            json.dump(opening_dict, outfile, indent=4)
 
 
 def get_eval(engine, fen=None, pgn_string=None, depth=None, time=None):
@@ -90,32 +116,57 @@ def get_eval(engine, fen=None, pgn_string=None, depth=None, time=None):
     elif depth:
         score = engine.analyse(board, chess.engine.Limit(depth=depth))['score'].white()
 
-    return score
+    return score.cp
 
 
-def process_file(path, engines):
-    outfile = f"results/{path.split('/')[-1]}_processed.tsv"
+def reduce_openings():
+    import json
+    """
+    Combine the json files from the named opening ECO codes and chuck out any uncommon openings 
+    :return:
+    """
+    cs = ['a', 'b', 'c', 'd', 'e']
+    MIN_NUM_GAMES = 5
+    openings = []
+    for c in cs:
+        with open(f"../results/ECO_master_db_{c}.json", "r") as file:
+            data = json.load(file)
+            df = pd.DataFrame.from_dict(data, orient="index")
+            df = df[df['Number of Master Games'] >= MIN_NUM_GAMES]
+            print(df.head())
+            openings.append(df)
+    merged_df = pd.concat(openings)
+    merged_df.sort_values(by='Number of Master Games', ascending=False, inplace=True)
+    merged_df.to_json("../results/ECO_w_Master_Games.json", orient='index', indent=4)
+    return openings
 
 
-"""
-def main():
-    from itertools import islice
+def add_evals_to_json(depth=15):
+    import json
 
-    header = ['Code', 'Name', 'Move List', 'Stockfish Eval', 'FinegoldFish Eval']
-    target_eco = 'c'
-    with open(f'../chess_openings/chess-openings/{target_eco}.tsv', "r", newline="") as in_file, open(
-            f'../results/{target_eco}.tsv', 'w', newline="") as out_file:
-        f_in = csv.reader(in_file, delimiter='\t')
-        f_out = csv.writer(out_file, delimiter='\t')
+    vanilla_sf = chess.engine.SimpleEngine.popen_uci('../Stockfish/stockfish_current_normal.exe')
+    no_f6_sf = chess.engine.SimpleEngine.popen_uci('../Stockfish/stockfish_f6_.exe')
 
-        f_out.writerow(header)
+    configs = {"Threads": 4,
+               "Hash": 2048,
+               }
+    vanilla_sf.configure(configs)
+    no_f6_sf.configure(configs)
 
-        for line in tqdm.tqdm(islice(f_in, 1, None), desc="Processing Positions", unit="line"):
-            position = line[-1]
-            sf_eval = get_eval(vanilla_sf, pgn_string=position, depth=26)
-            ff_eval = get_eval(no_f6_sf, pgn_string=position, depth=26)
-            f_out.writerow(line + [sf_eval, ff_eval])
+    with open('../results/ECO_w_Master_Games_Evaluated.json', "r") as in_file:
 
-"""
+        data = json.load(in_file)
+
+    for i, (position, details) in tqdm.tqdm(enumerate(data.items())):
+        if 'SF Eval' not in details:
+            details['SF Eval'] = get_eval(vanilla_sf, pgn_string=position, depth=depth)
+        if 'No f6 Eval' not in details:
+            details['No f6 Eval'] = get_eval(no_f6_sf, pgn_string=position, depth=depth)
+
+        if i % 50 == 0: # Periodically dump results in case of interruption
+            with open('../results/ECO_w_Master_Games_Evaluated.json', 'w') as out_file:
+                json.dump(data, out_file, indent=4)
+
+
 if __name__ == "__main__":
-    reduce_openings()
+    add_evals_to_json(depth=30)
