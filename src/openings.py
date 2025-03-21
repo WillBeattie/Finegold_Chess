@@ -154,7 +154,6 @@ def add_evals_to_json(depth=15):
     no_f6_sf.configure(configs)
 
     with open('../results/ECO_w_Master_Games_Evaluated.json', "r") as in_file:
-
         data = json.load(in_file)
 
     for i, (position, details) in tqdm.tqdm(enumerate(data.items())):

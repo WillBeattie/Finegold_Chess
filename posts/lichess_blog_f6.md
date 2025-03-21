@@ -3,16 +3,15 @@
 
 Grandmaster Ben Finegold has [some thoughts](https://www.reddit.com/r/chess/comments/e4m2ae/does_someone_know_all_or_some_of_ben_finegolds/) on how you ought to play chess.
 
-In his videos and lectures Ben sets out a number of general pieces of advice which he sarcastically refers to as *rules*, including the rule **never play f6**.  His rules are generally helpful (f6 weakens your king, after all) but of course these moves aren't always the best idea and are sometimes downright silly. **Never play f6** is an overly-broad tongue-in-cheek suggestion, not a rule. 
+In videos and lectures Ben espouses some general pieces of advice which he sarcastically calls *rules*, including the rule **never play f6**.  His rules are generally helpful (f6 weakens your king, after all) but of course they aren't always applicable and are sometimes downright silly. **Never play f6** is an overly-broad tongue-in-cheek suggestion, not a rule. 
 
 But what if it was?
 
-It turns out we can build a world without f6, and it teaches a great deal about openings and middlegame structures where f6 is a critical resource for black.
-
+It turns out we can build a world without f6, and it's absence teaches us about the many ways in which f6 can help our position.
 ## The Approach
 Here's the plan:
 1. Modify the [Stockfish](https://stockfishchess.org/) engine to make a version that  thinks the move pawn to f6 is illegal.  We'll call it **FinegoldFish**
-2. Evaluate every named opening in the Encyclopedia of Chess Openings (ECO) using FinegoldFish, then Stockfish 
+2. Evaluate every named opening in the Encyclopedia of Chess Openings (ECO) using both FinegoldFish and Stockfish 
 3. Compare those evaluations to measure how much of a penalty the 'no f6' rule gives
 4. Find some openings that are both a) popular, and b) heavily penalized by the 'no f6' rule
 5. Play through some games to try to figure out, in words and variations, why f6 is such an important resource in those lines
@@ -26,8 +25,10 @@ The vast majority of openings have little to no difference, and that makes sense
 
 Let's zoom in on some of the more heavily punished openings and see what they are.
 
+So far all we know is that most openings don't really get hurt by Ben's rule, but we don't know why.  To understand the purpose of f6 better we can play out some of those punished positions with the help of Stockfish, FinegoldFish, and the master's database.
+
 ## Reasons You Might Need to Play f6 
-I selected ten openings that are both popular and punished by the no-f6 rule and created a study to explore why.  In each line the move f6 is a key resource for black, but for different reasons.  I've grouped them accordingly, and we'll look at an example of each below.
+I selected ten openings that are both popular and punished by the no-f6 rule and created a study to explore why: [Study - Never Play f6??](https://lichess.org/study/9HUPUTCa).  In each line the move f6 is a key resource for black, but for different reasons.  I've grouped them accordingly, and we'll look at an example of each below.
 
 ### Tactical Necessity - Vukovic Gambit
 Probably the most convincing and least interesting examples of the lot, sometimes f6 is simply the only move to prevent immediate material loss.  Being able to repel a white bishop after it moves to g5 seems to be particularly thematic.
@@ -38,7 +39,7 @@ A more familiar reason for f6 comes from closed French structures, which I get a
 
 https://lichess.org/study/9HUPUTCa/kfDQhlkN#15
 ### Open the f-file to Attack! - Ruy Lopez, Dilworth
-The Dilworth Ruy Lopez is the only variation I found with f6 as an offensive weapon.  In it, black gets a big initiative but has poor long-term chances, and needs to open lines.  The move f6 is played to open the f-file for black's rook and queen before the white king finds safety. 
+The Dilworth Ruy Lopez is the only variation I found with f6 as an offensive weapon.  Here black gets a big initiative but has poor long-term chances, and therefore needs to open lines.  The move f6 is played to open the f-file for black's rook and queen before the white king finds safety. 
 
 
 https://lichess.org/study/9HUPUTCa/BjTIOAq0#23
@@ -47,6 +48,9 @@ https://lichess.org/study/9HUPUTCa/BjTIOAq0#23
 Of the many variations of the Gruenfeld this is perhaps the most popular, and it downright stinks without f6.  White sacrifices the exchange to get Black's Gruenfeld fianchettoed bishop, leaving the dark squares around black's king vulnerable.  The move f6 is badly needed to block the long diagonal
 https://lichess.org/study/9HUPUTCa/tpf4kQ8k#26
 
+## Conclusion
+I hope you enjoyed this exploration and learned to love f6 just a little bit more.  Constraints can be illuminating and fiddling with Stockfish was easier than I thought.  My next project might be trying to make a version that uses all of Ben's rules to see what madness it cooks up.  I suspect "Always play Kb8" might be debilitating in endings :).
 
+If you're curious about how your pet line fares in the no-f6 universe, a full list of the positions tested and SF & FF evaluations is available here: [Results Table on Github]().
 
 [^1] Evaluations done at depth 30
