@@ -1,4 +1,5 @@
 import matplotlib
+from matplotlib.ticker import ScalarFormatter
 
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
@@ -7,24 +8,21 @@ import pandas as pd
 plt.ion()
 
 
-def load_df():
-    df = pd.read_json('../results/ECO_w_Master_Games_Evaluated.json')
-    df = df.T
-    df = df[df['SF Eval'].notna()]  # Remove unevaluated positions
-    df = df[df['No f6 Eval'].notna()]  # Remove unevaluated positions
-    df['No f6 Delta'] = df['No f6 Eval'] - df['SF Eval']  # Add column for plotting
-    df.sort_values('No f6 Delta', inplace=True, ascending=False)
-    df['ECO Family'] = df['ECO Code'].str[0]
-    return df
+def plot_eval_against_frequency(df, detail=False):
+    from matplotlib.ticker import ScalarFormatter
 
+    fig, ax = plt.subplots(figsize=(8, 5))
+    cmap = {'Double King Pawn': 'C0',
+            'Double Queen Pawn': 'C1',
+            'Sicilian': 'C2',
+            'French': 'C3',
+            'Caro-Kann': 'C4',
+            'Gruenfeld': 'C5',
+            'Indian Defences': 'C6',
+            'Other 1. e4': 'C7',
+            'Other 1. d4': 'C8',
+            'Other': 'C9'}
 
-def plot_eval_against_frequency(df):
-    fig, ax = plt.subplots()
-    cmap = {'A': 'C0',
-            'B': 'C1',
-            'C': 'C2',
-            'D': 'C3',
-            'E': 'C4'}
     for eco_family, group in df.groupby('ECO Family'):
         group.plot.scatter(x='Number of Master Games', y='No f6 Delta', label=eco_family, ax=ax, c=cmap[eco_family],
                            alpha=0.5)
@@ -34,7 +32,30 @@ def plot_eval_against_frequency(df):
     ax.grid(':', alpha=0.5)
     ax.set_title('How much does the no-f6 rule hurt each opening?')
     ax.set_ylabel('Change in Evaluation if f6 is illegal (centipawns)')
-    plt.legend(title='ECO Family')
+    ax.xaxis.set_major_formatter(ScalarFormatter())
+    ax.ticklabel_format(style='plain', axis='x')
+    plt.legend(title='Opening Family')
+
+    if detail:
+        from adjustText import adjust_text
+
+        labeled_positions = [
+            {'x': 46, 'y': 179 + 42, 'label': 'Vukovic Gambit'},
+            {'x': 659, 'y': 111, 'label': "Exchange Ruy, King's Bishop"},
+            {'x': 1240, 'y': 56, 'label': "Caro-Kann Panov"},
+            {'x': 268, 'y': 83, 'label': "Petrov, Chigorin"},
+            {'x': 8559, 'y': 84, 'label': "French, Closed Tarrasch"},
+            {'x': 2922, 'y': 91, 'label': "KID Saemisch Gambit"},
+            {'x': 219, 'y': 64, 'label': "KID Averbakh, 7. dxc5"},
+            {'x': 391, 'y': 129, 'label': "Ruy Lopez, Dilworth"},
+            {'x': 566, 'y': 83, 'label': "Exchange Gruenfeld, Spassky"},
+            {'x': 1338, 'y': 71, 'label': "Budapest, Rubinstein"}
+        ]
+        ax.set_xlim(30, 30000)
+        ax.set_ylim(50, 250)
+        texts = [ax.text(pos['x'], pos['y'], pos['label'], fontsize=10) for pos in labeled_positions]
+
+        adjust_text(texts, ax=ax, expand_text=(1.0, 1.3), arrowprops=dict(arrowstyle='-', color='black', lw=0.5, relpos=(0,0.5)))
     return ax
 
 
@@ -69,7 +90,6 @@ def opening_by_eco_code(code):
                 return 'Double Queen Pawn'
             else:
                 return 'Gruenfeld'
-
         case 'E':
             return 'Indian Defences'
         case _:
@@ -78,11 +98,6 @@ def opening_by_eco_code(code):
 
 def plot_eval_against_f6(df):
     fig, ax = plt.subplots(figsize=(8, 6))
-    cmap = {'A': 'C0',
-            'B': 'C1',
-            'C': 'C2',
-            'D': 'C3',
-            'E': 'C4'}
 
     cmap = {'Double King Pawn': 'C0',
             'Double Queen Pawn': 'C1',
@@ -113,8 +128,20 @@ def plot_eval_against_f6(df):
     return ax
 
 
+def load_df():
+    df = pd.read_json('../results/ECO_w_Master_Games_Evaluated.json')
+    df = df.T
+    df = df[df['SF Eval'].notna()]  # Remove unevaluated positions
+    df = df[df['No f6 Eval'].notna()]  # Remove unevaluated positions
+    df['No f6 Delta'] = df['No f6 Eval'] - df['SF Eval']  # Add column for plotting
+    df.sort_values('No f6 Delta', inplace=True, ascending=False)
+    # df['ECO Family'] = df['ECO Code'].str[0]
+    df['ECO Family'] = df['ECO Code'].apply(opening_by_eco_code)
+    return df
+
+
 if __name__ == "__main__":
     df = load_df()
-    ax = plot_eval_against_frequency(df)
+    ax = plot_eval_against_frequency(df, detail=False)
     plt.tight_layout()
     plt.show()
