@@ -6,6 +6,7 @@ import pandas as pd
 
 plt.ion()
 
+
 def load_df():
     df = pd.read_json('../results/ECO_w_Master_Games_Evaluated.json')
     df = df.T
@@ -37,6 +38,44 @@ def plot_eval_against_frequency(df):
     return ax
 
 
+def opening_by_eco_code(code):
+    family = code[0]
+    num = int(code[1:])
+
+    match family:
+        case 'A':
+            if num < 45 or num > 79:
+                return 'Other'
+            elif num < 50:
+                return 'Other 1. d4'
+            else:
+                return 'Indian Defences'
+
+        case 'B':
+            if num < 10:
+                return 'Other 1. e4'
+            elif num < 20:
+                return 'Caro-Kann'
+            else:
+                return 'Sicilian'
+
+        case 'C':
+            if num < 20:
+                return 'French'
+            else:
+                return 'Double King Pawn'
+        case 'D':
+            if num < 70:
+                return 'Double Queen Pawn'
+            else:
+                return 'Gruenfeld'
+
+        case 'E':
+            return 'Indian Defences'
+        case _:
+            raise ValueError(f'Invalid code: {code}')
+
+
 def plot_eval_against_f6(df):
     fig, ax = plt.subplots(figsize=(8, 6))
     cmap = {'A': 'C0',
@@ -44,6 +83,17 @@ def plot_eval_against_f6(df):
             'C': 'C2',
             'D': 'C3',
             'E': 'C4'}
+
+    cmap = {'Double King Pawn': 'C0',
+            'Double Queen Pawn': 'C1',
+            'Sicilian': 'C2',
+            'French': 'C3',
+            'Caro-Kann': 'C4',
+            'Gruenfeld': 'C5',
+            'Indian Defences': 'C6',
+            'Other 1. e4': 'C7',
+            'Other 1. d4': 'C8',
+            'Other': 'C9'}
     df['f6 frequency'] = 100 * df['Number of f6 moves'] / df['Number of Master Games']
     df = df[df['f6 frequency'] > 5]
 
