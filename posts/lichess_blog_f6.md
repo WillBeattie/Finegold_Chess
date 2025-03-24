@@ -1,5 +1,5 @@
-# Never Play f6?!
-## What Finegold Chess Teaches us About Middlegame Plans
+# Exploring Finegold Chess
+## Or, How I Learned To Stop Worrying and Love ..f6!
 
 Grandmaster Ben Finegold has [some thoughts](https://www.reddit.com/r/chess/comments/e4m2ae/does_someone_know_all_or_some_of_ben_finegolds/) on how you ought to play chess.
 
