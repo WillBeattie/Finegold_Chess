@@ -18,4 +18,10 @@ As I progress I'll update the list of discussion blog posts below.
 * [Modifying Stockfish's `movegen.cpp` file](./posts/forking_stockfish.md)
 * [How I stopped worrying and learned to love f6](./posts/lichess_blog_f6.md)
 
+## License
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0).  
+It includes the Stockfish chess engine, which is also licensed under GPL-3.0.  
+
+- Stockfish repository: [https://github.com/official-stockfish/Stockfish](https://github.com/official-stockfish/Stockfish)
+- GPL-3.0 License: [https://www.gnu.org/licenses/gpl-3.0.en.html](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
